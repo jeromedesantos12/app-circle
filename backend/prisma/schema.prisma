@@ -1,0 +1,100 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String   @id @default(uuid())
+  username         String?   @unique
+  full_name        String
+  email            String   @unique
+  password         String
+  photo_profile    String?
+  bio              String?
+  created_at       DateTime @default(now())
+  created_by       String?
+  updated_at       DateTime @updatedAt
+  updated_by       String?
+  userCreated      User?    @relation("UserToUserCreated", fields: [created_by], references: [id])
+  userUpdated      User?    @relation("UserToUserUpdated", fields: [updated_by], references: [id])
+  threadsCreated   Thread[] @relation("UserToThreadCreated")
+  threadsUpdated   Thread[] @relation("UserToThreadUpdated")
+  replies          Reply[]  @relation("UserToReply")
+  likes            Like[]   @relation("UserToLike")
+  followers        Following[] @relation("FollowingToFollower")
+  following        Following[] @relation("FollowingToFollowing")
+  createdUsers     User[]   @relation("UserToUserCreated")
+  updatedUsers     User[]   @relation("UserToUserUpdated")
+  createdReplies   Reply[]  @relation("UserToReplyCreated")
+  updatedReplies   Reply[]  @relation("UserToReplyUpdated")
+  createdLikes     Like[]   @relation("UserToLikeCreated")
+  updatedLikes     Like[]   @relation("UserToLikeUpdated")
+  createdFollowing Following[] @relation("UserToFollowingCreated")
+  updatedFollowing Following[] @relation("UserToFollowingUpdated")
+}
+
+model Thread {
+  id                  String   @id @default(uuid())
+  content             String
+  image               String?
+  number_of_replies   Int?
+  created_at          DateTime @default(now())
+  created_by          String?
+  updated_at          DateTime @updatedAt
+  updated_by          String?
+  userCreated         User?    @relation("UserToThreadCreated", fields: [created_by], references: [id])
+  userUpdated         User?    @relation("UserToThreadUpdated", fields: [updated_by], references: [id])
+  replies             Reply[]  @relation("ThreadToReply")
+  likes               Like[]   @relation("ThreadToLike")
+}
+
+model Reply {
+  id                  String   @id @default(uuid())
+  user_id             String
+  thread_id           String
+  image               String?
+  content             String
+  created_at          DateTime @default(now())
+  created_by          String?
+  updated_at          DateTime @updatedAt
+  updated_by          String?
+  user                User     @relation("UserToReply", fields: [user_id], references: [id])
+  thread              Thread   @relation("ThreadToReply", fields: [thread_id], references: [id])
+  userCreated         User?    @relation("UserToReplyCreated", fields: [created_by], references: [id])
+  userUpdated         User?    @relation("UserToReplyUpdated", fields: [updated_by], references: [id])
+}
+
+model Like {
+  id                  String   @id @default(uuid())
+  user_id             String
+  thread_id           String
+  created_at          DateTime @default(now())
+  created_by          String?
+  updated_at          DateTime @updatedAt
+  updated_by          String?
+  user                User     @relation("UserToLike", fields: [user_id], references: [id])
+  thread              Thread   @relation("ThreadToLike", fields: [thread_id], references: [id])
+  userCreated         User?    @relation("UserToLikeCreated", fields: [created_by], references: [id])
+  userUpdated         User?    @relation("UserToLikeUpdated", fields: [updated_by], references: [id])
+}
+
+model Following {
+  id                  String   @id @default(uuid())
+  following_id        String
+  follower_id         String
+  created_at          DateTime @default(now())
+  created_by          String?
+  updated_at          DateTime @updatedAt
+  updated_by          String?
+  user_following      User     @relation("FollowingToFollowing", fields: [following_id], references: [id])
+  user_follower       User     @relation("FollowingToFollower", fields: [follower_id], references: [id])
+  userCreated         User?    @relation("UserToFollowingCreated", fields: [created_by], references: [id])
+  userUpdated         User?    @relation("UserToFollowingUpdated", fields: [updated_by], references: [id])
+}

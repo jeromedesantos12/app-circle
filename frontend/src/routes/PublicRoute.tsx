@@ -10,7 +10,7 @@ export function PublicRoute() {
   const dispatch: AppDispatch = useDispatch();
 
   useEffect(() => {
-    if (!data && status === "idle") dispatch(verifyToken());
+    if (status === "idle") dispatch(verifyToken());
   }, [dispatch, data, status]);
 
   if (status === "loading") return <Loading>Auth checking...</Loading>;

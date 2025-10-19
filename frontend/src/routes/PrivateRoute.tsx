@@ -6,12 +6,12 @@ import { verifyToken } from "../redux/slices/token";
 import type { AppDispatch, RootState } from "../redux/store";
 
 export function PrivateRoute() {
-  const { status, data } = useSelector((state: RootState) => state.token);
+  const { status } = useSelector((state: RootState) => state.token);
   const dispatch: AppDispatch = useDispatch();
 
   useEffect(() => {
-    if (!data && status !== "loading") dispatch(verifyToken());
-  }, [dispatch, data, status]);
+    if (status === "idle") dispatch(verifyToken());
+  }, [dispatch, status]);
 
   if (status === "loading") return <Loading>Auth checking...</Loading>;
   if (status === "failed") return <Navigate to="/login" replace />;

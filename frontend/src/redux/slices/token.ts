@@ -29,8 +29,17 @@ const tokenSlice = createSlice({
     error: null as string | null,
   },
   reducers: {
-    setToken: (state, action: PayloadAction<TokenType>) => {
-      state.data = action.payload;
+    setToken: (
+      state,
+      action: PayloadAction<{
+        data: TokenType | null;
+        status: string;
+        error: string | null;
+      }>
+    ) => {
+      state.data = action.payload.data;
+      state.status = action.payload.status;
+      state.error = action.payload.error;
     },
     clearToken: (state) => {
       state.data = null;

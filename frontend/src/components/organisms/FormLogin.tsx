@@ -1,15 +1,17 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { isAxiosError } from "axios";
 import { usersKeys, loginUser } from "../../queries/user";
 import { Input, Button, Alert } from "../atoms";
 import { Form } from "../molecules";
 import { loginSchema, type LoginFormData } from "../../schema/login";
+import { useDispatch } from "react-redux"; // Corrected import path
+import type { AppDispatch } from "../../redux/store"; // Corrected import path
+import { setToken } from "@/redux/slices/token";
 
 export function FormLogin() {
-  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -21,14 +23,16 @@ export function FormLogin() {
       password: "",
     },
   });
+  const dispatch: AppDispatch = useDispatch();
   const { mutate, isPending, isError, error } = useMutation({
     mutationKey: usersKeys.all,
-    mutationFn: loginUser,
-    onSuccess: () => {
-      navigate("/");
+    mutationFn: (payload: LoginFormData) => loginUser(payload),
+    onSuccess: (responseData) => {
+      dispatch(
+        setToken({ data: responseData, error: null, status: "succeeded" })
+      );
     },
   });
-
   function onSubmit(data: LoginFormData) {
     mutate(data);
   }

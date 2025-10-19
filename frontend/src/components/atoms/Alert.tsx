@@ -12,7 +12,7 @@ export function Alert({
 
   return (
     <div
-      className={`fixed top-5 w-full max-w-xs left-1/2 -translate-x-1/2  bg-zinc-800 p-4 rounded-xl flex flex-col gap-2 font-bold 
+      className={`z-50 fixed top-5 w-full max-w-xs left-1/2 -translate-x-1/2  bg-zinc-800 p-4 rounded-xl flex flex-col gap-2 font-bold 
         ${close ? "hidden" : ""}  
         ${variant === "danger" ? "text-red-400" : "text-zinc-300"}`}
     >

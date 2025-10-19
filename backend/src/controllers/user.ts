@@ -6,6 +6,7 @@ import { redis } from "../connections/redis";
 import { appError } from "../utils/error";
 import { signToken } from "../utils/jwt";
 import { hashPassword, comparePassword } from "../utils/bcrypt";
+import { rmCache } from "../utils/rm-cache";
 
 export async function loginUser(
   req: Request,
@@ -34,7 +35,6 @@ export async function loginUser(
       photo_profile: user.photo_profile,
       bio: user.bio,
     });
-    const { email, photo_profile, bio } = user;
     res
       .cookie("token", token, {
         httpOnly: true,
@@ -47,19 +47,10 @@ export async function loginUser(
       .json({
         status: "Success",
         message: `Login User by: ${emailOrUsername} success!`,
-      });
-    res
-      .cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 24 * 60 * 60 * 1000,
-        sameSite: "strict",
-        path: "/",
-      })
-      .status(200)
-      .json({
-        status: "Success",
-        message: `Login User by: ${emailOrUsername} success!`,
+        data: {
+          id: user.id,
+          username: user.username,
+        },
       });
   } catch (err) {
     next(err);
@@ -198,14 +189,30 @@ export async function getUsers(
   next: NextFunction
 ) {
   try {
-    const {
-      search,
-      sortBy = "created_at",
-      order = "desc",
-      offset = 0,
-      limit = 10,
-    } = req.query;
     const logUserId = (req as any).user.id;
+    const search = (req.query.search as string) || "";
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+    const sortField = req.query.sort === "order" ? "order_index" : "created_at";
+    const order =
+      (req.query.order as string)?.toLowerCase() === "asc" ? "ASC" : "DESC";
+    const keys = `users:${search}:${page}:${limit}:${sortField}:${order}`;
+    const REDIS_EXPIRATION_SECONDS = 3600;
+    const results = await redis.get(keys);
+    if (results) {
+      const { users, total } = JSON.parse(results);
+      return res.status(200).json({
+        status: "Success",
+        message: "Fetch users success! (From Cache)",
+        data: users,
+        meta: {
+          total,
+          page,
+          limit,
+        },
+      });
+    }
     const whereClause: any = {};
     if (search) {
       whereClause.OR = [
@@ -223,6 +230,9 @@ export async function getUsers(
         },
       ];
     }
+    const total = await prisma.user.count({
+      where: whereClause,
+    });
     const users = await prisma.user.findMany({
       where: whereClause,
       select: {
@@ -235,11 +245,11 @@ export async function getUsers(
         created_at: true,
         updated_at: true,
       },
+      take: limit,
+      skip: skip,
       orderBy: {
-        [sortBy as string]: order as "asc" | "desc",
+        [sortField]: order as any,
       },
-      skip: Number(offset),
-      take: Number(limit),
     });
     const followedUsers = await prisma.following.findMany({
       where: {
@@ -254,24 +264,21 @@ export async function getUsers(
       ...user,
       isFollowed: followedUserIds.has(user.id),
     }));
-    let results = null;
-    const key = "getUsers:" + search;
-    const value = await redis.get(key);
-    if (value) {
-      results = JSON.parse(value);
-      console.log("Catche hit");
-    } else {
-      results = usersWithFollowStatus;
-      await redis.set(key, JSON.stringify(results), {
-        EX: 300,
-      });
-      console.log("Catche miss");
-    }
+    const dataToCache = { usersWithFollowStatus, total };
+    await redis.setEx(
+      keys,
+      REDIS_EXPIRATION_SECONDS,
+      JSON.stringify(dataToCache)
+    );
     res.status(200).json({
       status: "Success",
       message: "Fetch users success!",
-      // data: results,
       data: usersWithFollowStatus,
+      meta: {
+        total,
+        page,
+        limit,
+      },
     });
   } catch (err) {
     next(err);
@@ -300,23 +307,9 @@ export async function getUserById(
       },
       where: { id },
     });
-    let results = null;
-    const key = "getUserById:" + id;
-    const value = await redis.get(key);
-    if (value) {
-      results = JSON.parse(value);
-      console.log("Catche hit");
-    } else {
-      results = user;
-      await redis.set(key, JSON.stringify(results), {
-        EX: 300,
-      });
-      console.log("Catche miss");
-    }
     res.status(200).json({
       status: "Success",
       message: "Fetch user success!",
-      // data: results,
       data: user,
     });
   } catch (err) {
@@ -384,6 +377,7 @@ export async function updateUser(
       }
       writeFileSync(newFilePath!, fileBuffer);
     }
+    await rmCache("users:");
     res.status(200).json({
       status: "Success",
       message: `Update user ${full_name} success!`,

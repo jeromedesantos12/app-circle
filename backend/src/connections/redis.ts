@@ -1,10 +1,13 @@
 import { createClient } from "redis";
 
-export const redis = createClient();
-
-(async () => {
-  redis.on("error", (err) => console.log("Redis Client Error 💥", err));
-  redis.on("ready", () => console.log("Redis Client started ✨"));
-  await redis.connect();
-  await redis.ping();
-})();
+const redisUrl = process.env.REDIS_URL;
+if (!redisUrl) {
+  throw new Error("❌ Missing REDIS_URL in environment variables");
+}
+export const redis = createClient({
+  url: redisUrl,
+});
+redis.on("error", (err) => console.error("❌ Redis Error:", err));
+if (process.env.NODE_ENV !== "production") {
+  redis.connect().then(() => console.log("✅ Redis connected (dev mode)"));
+}

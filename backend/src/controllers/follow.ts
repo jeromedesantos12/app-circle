@@ -89,24 +89,10 @@ export async function getFollows(
       ...user,
       isFollowed: followedUserIds.has(user.id),
     }));
-    let results = null;
-    const key = "getFollows:" + follower_id;
-    const value = await redis.get(key);
-    if (value) {
-      results = JSON.parse(value);
-      console.log("Catche hit");
-    } else {
-      results = usersWithFollowStatus;
-      await redis.set(key, JSON.stringify(results), {
-        EX: 300,
-      });
-      console.log("Catche miss");
-    }
     res.status(200).json({
       status: "Success",
       message: "Fetch threads success!",
       data: usersWithFollowStatus,
-      // data: results,
     });
   } catch (err) {
     next(err);
@@ -162,24 +148,10 @@ export async function getFollowing(
       ...user,
       isFollowed: followedUserIds.has(user.id),
     }));
-    let results = null;
-    const key = "getFollowing:" + follower_id;
-    const value = await redis.get(key);
-    if (value) {
-      results = JSON.parse(value);
-      console.log("Catche hit");
-    } else {
-      results = usersWithFollowStatus;
-      await redis.set(key, JSON.stringify(results), {
-        EX: 300,
-      });
-      console.log("Catche miss");
-    }
     res.status(200).json({
       status: "Success",
       message: "Fetch following success!",
       data: usersWithFollowStatus,
-      // data: results,
     });
   } catch (err) {
     next(err);
@@ -235,24 +207,10 @@ export async function getFollowers(
       ...user,
       isFollowed: followedUserIds.has(user.id),
     }));
-    let results = null;
-    const key = "getFollowers:" + following_id;
-    const value = await redis.get(key);
-    if (value) {
-      results = JSON.parse(value);
-      console.log("Catche hit");
-    } else {
-      results = usersWithFollowStatus;
-      await redis.set(key, JSON.stringify(results), {
-        EX: 300,
-      });
-      console.log("Catche miss");
-    }
     res.status(200).json({
       status: "Success",
       message: "Fetch following success!",
       data: usersWithFollowStatus,
-      // data: results,
     });
   } catch (err) {
     next(err);

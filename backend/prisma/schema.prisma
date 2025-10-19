@@ -44,7 +44,6 @@ model Thread {
   id                  String   @id @default(uuid())
   content             String
   image               String?
-  number_of_replies   Int?
   created_at          DateTime @default(now())
   created_by          String?
   updated_at          DateTime @updatedAt

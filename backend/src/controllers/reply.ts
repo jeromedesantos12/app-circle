@@ -7,6 +7,7 @@ import { prisma } from "../connections/prisma";
 import { redis } from "../connections/redis";
 import type { ReplyType } from "../types/reply";
 import { appError } from "../utils/error";
+import { rmCache } from "../utils/rm-cache";
 
 export async function getReplies(
   req: Request,
@@ -15,52 +16,62 @@ export async function getReplies(
 ) {
   try {
     const { id: thread_id } = req.params;
-    const {
-      sortBy = "created_at",
-      order = "desc",
-      offset = 0,
-      limit = 10,
-    } = req.query;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+    const sortField = req.query.sort === "order" ? "order_index" : "created_at";
+    const order =
+      (req.query.order as string)?.toLowerCase() === "asc" ? "ASC" : "DESC";
+    const cacheKey = `replies:${thread_id}:${page}:${limit}:${sortField}:${order}`;
+    const REDIS_EXPIRATION_SECONDS = 3600;
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      const { replies, total } = JSON.parse(cached);
+      return res.status(200).json({
+        status: "Success",
+        message: "Fetch replies success! (From Cache)",
+        data: replies,
+        meta: { total, page, limit },
+      });
+    }
+    const totalResult = await prisma.$queryRawUnsafe<{ count: bigint }[]>(
+      `SELECT COUNT(*)::bigint AS count FROM "Reply" WHERE thread_id = '${thread_id}';`
+    );
+    const total = Number(totalResult[0]?.count || 0);
     const rawReply = await prisma.$queryRawUnsafe(
       `SELECT 
-            R.id, 
-            U.photo_profile, 
-            U.full_name, 
-            U.username, 
-            R.content, 
-            R.created_at, 
-            R.image, 
-            R.created_by, 
-            R.updated_at, 
-            R.updated_by
+          R.id, 
+          U.photo_profile, 
+          U.full_name, 
+          U.username, 
+          R.content, 
+          R.created_at, 
+          R.image, 
+          R.created_by, 
+          R.updated_at, 
+          R.updated_by
         FROM "Reply" AS R
         JOIN "User" AS U ON R.created_by = U.id
         WHERE R.thread_id = '${thread_id}'
-        ORDER BY ${sortBy} ${order}
-        OFFSET ${offset} LIMIT ${limit}`
+        ORDER BY ${sortField} ${order}
+        OFFSET ${skip} LIMIT ${limit};`
     );
     dayjs.extend(relativeTime);
-    const reply = (rawReply as ReplyType[]).map((thread) => ({
-      ...thread,
-      age: dayjs(thread.created_at).fromNow(),
+    const replies = (rawReply as ReplyType[]).map((reply) => ({
+      ...reply,
+      age: dayjs(reply.created_at).fromNow(),
     }));
-    let results = null;
-    const key = "getReplies:" + thread_id;
-    const value = await redis.get(key);
-    if (value) {
-      results = JSON.parse(value);
-      console.log("Catche hit");
-    } else {
-      results = reply;
-      await redis.set(key, JSON.stringify(results), {
-        EX: 300,
-      });
-      console.log("Catche miss");
-    }
+    const dataToCache = { replies, total };
+    await redis.setEx(
+      cacheKey,
+      REDIS_EXPIRATION_SECONDS,
+      JSON.stringify(dataToCache)
+    );
     res.status(200).json({
       status: "Success",
-      message: "Fetch threads success!",
-      data: results,
+      message: "Fetch replies success!",
+      data: replies,
+      meta: { total, page, limit },
     });
   } catch (err) {
     next(err);
@@ -124,6 +135,7 @@ export async function postReplies(
       const savePath = resolve(process.cwd(), "uploads", "reply", fileName);
       writeFileSync(savePath, fileBuffer);
     }
+    await rmCache("replies:");
     res.status(201).json({
       status: "Success",
       message: `Create reply: ${content} success!`,
@@ -160,14 +172,13 @@ export async function deleteReply(
     if (existingReply.image) {
       const uploadsRoot = resolve(process.cwd(), "uploads");
       const filePath = resolve(uploadsRoot, existingReply.image);
-
       unlink(filePath, (err) => {
         if (err) {
           console.error(`❌ Gagal hapus reply file: ${filePath}`);
         }
       });
     }
-
+    await rmCache("replies:");
     res.status(200).json({
       status: "Success",
       message: `Delete reply by id: ${id} success!`,

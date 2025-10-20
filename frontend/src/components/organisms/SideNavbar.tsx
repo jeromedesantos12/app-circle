@@ -24,8 +24,8 @@ export function SideNavbar() {
   }
 
   return (
-    <div className="w-full max-w-xs">
-      <div className="fixed z-30 px-10 py-10 w-full max-w-xs h-full bg-zinc-900">
+    <div className="hidden md:block">
+      <div className="sticky top-0 z-30 px-5 xl:px-10 py-10 h-screen flex flex-col gap-15">
         {isError && (
           <Alert variant="danger">
             {isAxiosError(error) && error.response
@@ -33,51 +33,51 @@ export function SideNavbar() {
               : error.message}
           </Alert>
         )}
-        <div className="flex flex-col gap-15">
-          <Logo className="text-5xl" />
-          <div className="flex flex-col flex-1 gap-70">
-            <div className="flex flex-col w-fit gap-5">
-              <Link
-                to="/"
-                className={`text-zinc-300 font-bold text-lg flex items-center gap-2 px-10 py-2 rounded-2xl hover:bg-zinc-800 duration-300`}
-              >
-                <House />
-                <p>Home</p>
-              </Link>
-              <Link
-                to="/search"
-                className="text-zinc-300 font-bold text-lg flex items-center gap-2 px-10 py-2 rounded-2xl hover:bg-zinc-800 duration-300"
-              >
-                <UserRoundSearch />
-                <p>Search</p>
-              </Link>
-              <Link
-                to="/follows"
-                className="text-zinc-300 font-bold text-lg flex items-center gap-2 px-10 py-2 rounded-2xl hover:bg-zinc-800 duration-300"
-              >
-                <Heart />
-                <p>Follows</p>
-              </Link>
-              {/* <Link
+        <div className="flex flex-col gap-10">
+          <Logo className="text-5xl hidden xl:block" />
+          <div className="flex flex-col flex-1 gap-5">
+            <Link
+              to="/"
+              className={`text-zinc-300 font-bold text-lg flex items-center gap-2  px-8 py-2 rounded-2xl hover:bg-zinc-800 duration-300`}
+            >
+              <House />
+              <p className="hidden xl:block">Home</p>
+            </Link>
+            <Link
+              to="/search"
+              className="text-zinc-300 font-bold text-lg flex items-center gap-2  px-8 py-2 rounded-2xl hover:bg-zinc-800 duration-300"
+            >
+              <UserRoundSearch />
+              <p className="hidden xl:block">Search</p>
+            </Link>
+            <Link
+              to="/follows"
+              className="text-zinc-300 font-bold text-lg flex items-center gap-2  px-8 py-2 rounded-2xl hover:bg-zinc-800 duration-300"
+            >
+              <Heart />
+              <p className="hidden xl:block">Follows</p>
+            </Link>
+            {/* <Link
                 to="/"
                 className="text-zinc-300 font-bold text-lg flex items-center gap-2 px-10 py-2 rounded-2xl hover:bg-zinc-800 duration-300"
               >
                 <CircleUser />
-                <p>Profile</p>
+                <p className="hidden xl:block">Profile</p>
               </Link> */}
-            </div>
-            <div className="w-fit">
-              <button
-                className={`${
-                  isPending ? "animate-pulse text-zinc-500" : "text-zinc-300"
-                } font-bold text-lg flex w-full items-center gap-2 px-10 py-2 rounded-2xl hover:bg-zinc-800 duration-300`}
-                onClick={handleLogout}
-                disabled={isPending}
-              >
-                <LogOut />
-                <p>{isPending ? "Logging out..." : "Logout"}</p>
-              </button>
-            </div>
+          </div>
+          <div className="w-fit">
+            <button
+              className={`${
+                isPending ? "animate-pulse text-zinc-500" : "text-zinc-300"
+              } font-bold text-lg flex w-full items-center gap-2 px-8 py-2 rounded-2xl hover:bg-zinc-800 duration-300`}
+              onClick={handleLogout}
+              disabled={isPending}
+            >
+              <LogOut />
+              <p className="hidden xl:block">
+                {isPending ? "Logging out..." : "Logout"}
+              </p>
+            </button>
           </div>
         </div>
       </div>

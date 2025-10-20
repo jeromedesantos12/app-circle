@@ -64,8 +64,8 @@ export function SideProfile() {
   }, [dispatch, user?.id]);
 
   return (
-    <div className="w-full max-w-md">
-      <div className="fixed flex w-full max-w-sm flex-col gap-5 items-center">
+    <div className="hidden lg:block w-80 flex-shrink-0">
+      <div className="sticky top-0 flex w-full flex-col gap-5 items-center">
         {statusUser && statusCount === "failed" && (
           <div className="py-5">
             <Alert variant="danger">{errorUser}</Alert>

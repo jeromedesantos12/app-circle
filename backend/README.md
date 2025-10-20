@@ -16,3 +16,7 @@
 1. Buat page untuk lihat profile orang lain
 2. Pasang Forgot dan Reset Password dari email
 3. Pasang Refresh Token
+
+### BUG
+
+1. Di FE socket on ga bisa update counter follow/unfollow di user lain pas user kita follow/unfollow user orang itu

@@ -1,5 +1,6 @@
 {
-  "name": "stage2",
+  "name": "app-circle",
+  "description": "App for circle social media",
   "private": true,
   "version": "0.0.0",
   "type": "module",

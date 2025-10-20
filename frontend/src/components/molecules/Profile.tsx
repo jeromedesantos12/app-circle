@@ -7,6 +7,9 @@ import { useMutation } from "@tanstack/react-query";
 import { updateUser, usersKeys } from "@/queries/user";
 import { isAxiosError } from "axios";
 import { ButtonDone } from "../atoms/ButtonDone";
+import type { AppDispatch, RootState } from "@/redux/store";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchUserById } from "@/redux/slices/userById";
 
 export function Profile({
   id,
@@ -28,6 +31,7 @@ export function Profile({
   totalFollowers?: number;
   pending?: boolean;
 }) {
+  const { data } = useSelector((state: RootState) => state.token);
   const baseURL: string = import.meta.env.VITE_BASE_URL;
   const userUrl = photo_profile && `${baseURL}/uploads/${photo_profile}`;
   const fileInputRef = useRef(null);
@@ -37,12 +41,15 @@ export function Profile({
   const [base64Image, setBase64Image] = useState<string | null>(
     userUrl || null
   );
+  const dispatch: AppDispatch = useDispatch();
   const { mutate, isPending, isError, error } = useMutation({
     mutationKey: usersKeys.all,
     mutationFn: (formData: FormData) => updateUser(id, formData),
     onSuccess: () => {
       setRemove(null);
       setEdit(!edit);
+      if (data?.id) dispatch(fetchUserById(data.id));
+
       reset();
     },
   });

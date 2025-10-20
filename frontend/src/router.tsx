@@ -7,8 +7,8 @@ import {
   Search,
   Register,
   Login,
-  Forgot,
-  Reset,
+  // Forgot,
+  // Reset,
   NotFound,
 } from "./pages";
 import { Layout, LayoutAuth } from "./components/template";
@@ -37,8 +37,8 @@ export const router = createBrowserRouter([
         children: [
           { path: "register", element: <Register /> },
           { path: "login", element: <Login /> },
-          { path: "forgot", element: <Forgot /> },
-          { path: "reset/:id", element: <Reset /> },
+          // { path: "forgot", element: <Forgot /> },
+          // { path: "reset/:id", element: <Reset /> },
         ],
       },
     ],

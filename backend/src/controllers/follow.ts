@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { prisma } from "../connections/prisma";
 import { redis } from "../connections/redis";
 import { appError } from "../utils/error";
+import { rmCache } from "../utils/rm-cache";
 
 export async function countFollows(
   req: Request,
@@ -250,6 +251,7 @@ export async function postFollows(
         targetUser: following_id,
         followingData,
       });
+      await rmCache("users:");
       return res.status(201).json({
         status: "Success",
         message: "Following deleted successfully",
@@ -289,6 +291,7 @@ export async function postFollows(
       targetUser: following_id,
       followingData: formattedData,
     });
+    await rmCache("users:");
     res.status(201).json({
       status: "Success",
       message: `Create following for user: ${following_id} success!`,

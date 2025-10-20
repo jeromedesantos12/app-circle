@@ -1,4 +1,3 @@
-// Input.jsx (komponen atom)
 import { Eye, EyeClosed } from "lucide-react";
 import {
   type ReactNode,

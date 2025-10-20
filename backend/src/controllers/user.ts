@@ -196,16 +196,16 @@ export async function getUsers(
     const skip = (page - 1) * limit;
     const sortField = req.query.sort === "order" ? "order_index" : "created_at";
     const order =
-      (req.query.order as string)?.toLowerCase() === "asc" ? "ASC" : "DESC";
+      (req.query.order as string)?.toLowerCase() === "asc" ? "asc" : "desc";
     const keys = `users:${search}:${page}:${limit}:${sortField}:${order}`;
     const REDIS_EXPIRATION_SECONDS = 3600;
     const results = await redis.get(keys);
     if (results) {
-      const { users, total } = JSON.parse(results);
+      const { usersWithFollowStatus, total } = JSON.parse(results);
       return res.status(200).json({
         status: "Success",
         message: "Fetch users success! (From Cache)",
-        data: users,
+        data: usersWithFollowStatus,
         meta: {
           total,
           page,

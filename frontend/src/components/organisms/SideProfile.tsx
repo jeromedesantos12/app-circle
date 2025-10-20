@@ -25,14 +25,24 @@ export function SideProfile() {
     status: statusCount,
     error: errorCount,
   } = useSelector((state: RootState) => state.count);
+  const { status: statusFollows } = useSelector(
+    (state: RootState) => state.follows
+  );
   const dispatch: AppDispatch = useDispatch();
 
   useEffect(() => {
     if (!data?.id) return;
-    dispatch(fetchUserById(data.id));
-    dispatch(fetchFollows(data.id));
-    dispatch(fetchCount(data.id));
-  }, [dispatch, data?.id]);
+
+    if (statusUser === "idle") {
+      dispatch(fetchUserById(data.id));
+    }
+    if (statusFollows === "idle") {
+      dispatch(fetchFollows(data.id));
+    }
+    if (statusCount === "idle") {
+      dispatch(fetchCount(data.id));
+    }
+  }, [dispatch, data?.id, statusUser, statusFollows, statusCount]);
 
   useEffect(() => {
     const socket = io(socketURL, {

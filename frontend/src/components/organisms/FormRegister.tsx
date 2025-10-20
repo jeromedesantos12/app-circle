@@ -64,8 +64,8 @@ export function FormRegister() {
         <p className="text-red-400">{errors.password.message}</p>
       )}
       <Input
-        type="confirmPassword"
-        id="password"
+        type="password"
+        id="confirmPassword"
         {...register("confirmPassword")}
       >
         Confirm Password

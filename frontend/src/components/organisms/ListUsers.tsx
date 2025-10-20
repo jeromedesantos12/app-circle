@@ -6,7 +6,6 @@ import { useDebounce } from "../../hooks/useDebounce";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUsers } from "../../redux/slices/users";
 import { Follow } from "../atoms/Follow";
-import { fetchCount } from "../../redux/slices/count";
 import { removeFollowing } from "../../redux/slices/following";
 import { addFollows } from "../../redux/slices/follows";
 import { fetchUserById } from "../../redux/slices/userById";
@@ -51,9 +50,9 @@ export function ListUsers() {
         followingData: FollowType;
         targetUser: string;
       }) => {
+        dispatch(fetchUsers(""));
         dispatch(fetchThreads());
         if (user?.id !== payload.user_id) return;
-        dispatch(fetchCount(payload.user_id));
         dispatch(removeFollowing(payload.targetUser));
         dispatch(addFollows(payload.followingData));
       }

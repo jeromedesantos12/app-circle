@@ -378,6 +378,11 @@ export async function updateUser(
       writeFileSync(newFilePath!, fileBuffer);
     }
     await rmCache("users:");
+    await rmCache("threads:");
+    await rmCache("replies:");
+    await rmCache("following:");
+    await rmCache("followers:");
+    await rmCache("follows:suggestion:");
     res.status(200).json({
       status: "Success",
       message: `Update user ${full_name} success!`,

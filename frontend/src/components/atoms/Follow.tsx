@@ -3,8 +3,10 @@ import { isAxiosError } from "axios";
 import { useMutation } from "@tanstack/react-query";
 import { followsKeys, postFollowing } from "../../queries/follow";
 import { Alert, ButtonProfile, ImgProfile } from "../atoms";
-import type { RootState } from "@/redux/store";
-import { useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "@/redux/store";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchCount } from "@/redux/slices/count";
+import { fetchThreads } from "@/redux/slices/threads";
 
 export function Follow({
   id,
@@ -30,11 +32,15 @@ export function Follow({
   const { data } = useSelector((state: RootState) => state.token);
   const [hidden, setHidden] = useState(false);
   const [active, setActive] = useState(false);
+  const dispatch: AppDispatch = useDispatch();
 
   const { mutate, isPending, isError, error } = useMutation({
     mutationKey: followsKeys.all,
     mutationFn: () => postFollowing(id as string),
     onSuccess: () => {
+      if (!data?.id) return;
+      dispatch(fetchCount(data.id));
+      dispatch(fetchThreads());
       setActive(!active);
     },
   });

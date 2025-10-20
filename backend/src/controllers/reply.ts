@@ -136,6 +136,7 @@ export async function postReplies(
       writeFileSync(savePath, fileBuffer);
     }
     await rmCache("replies:");
+    await rmCache("threads:");
     res.status(201).json({
       status: "Success",
       message: `Create reply: ${content} success!`,
@@ -179,6 +180,7 @@ export async function deleteReply(
       });
     }
     await rmCache("replies:");
+    await rmCache("threads:");
     res.status(200).json({
       status: "Success",
       message: `Delete reply by id: ${id} success!`,

@@ -9,7 +9,6 @@ import { fetchCount } from "../../redux/slices/count";
 import { addFollowing } from "../../redux/slices/following";
 import { People, Profile } from "../molecules";
 import { Alert } from "../atoms";
-import { fetchThreads } from "@/redux/slices/threads";
 
 const socketURL: string = import.meta.env.VITE_SOCKET_URL;
 
@@ -61,11 +60,20 @@ export function SideProfile() {
         followingData: FollowType;
         targetUser: string;
       }) => {
-        dispatch(fetchThreads());
-        if (user?.id !== payload.user_id) return;
-        dispatch(fetchCount(payload.user_id));
-        dispatch(addFollowing(payload.followingData));
-        dispatch(removeFollows(payload.targetUser));
+        if (user?.id === payload.user_id) {
+          dispatch(fetchCount(payload.user_id));
+          dispatch(addFollowing(payload.followingData));
+          dispatch(removeFollows(payload.targetUser));
+        }
+      }
+    );
+    socket.on(
+      "deleteFollowing",
+      (payload: { user_id: string; targetUser: string }) => {
+        if (user?.id === payload.user_id) {
+          dispatch(fetchCount(payload.user_id));
+          dispatch(fetchFollows(payload.user_id));
+        }
       }
     );
     return () => {

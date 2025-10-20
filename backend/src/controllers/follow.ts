@@ -11,12 +11,23 @@ export async function countFollows(
 ) {
   try {
     const { id } = req.params;
+    const cacheKey = `counts:follow:${id}`;
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      return res.status(200).json({
+        status: "Success",
+        message: "Fetch counts success! (From Cache)",
+        data: JSON.parse(cached),
+      });
+    }
     const totalFollowing = await prisma.following.count({
       where: { follower_id: id },
     });
     const totalFollowers = await prisma.following.count({
       where: { following_id: id },
     });
+    const data = { totalFollowing, totalFollowers };
+    await redis.setEx(cacheKey, 3600, JSON.stringify(data));
     res.status(200).json({
       status: "Success",
       message: "Fetch threads success!",
@@ -44,6 +55,17 @@ export async function getFollows(
       offset = 0,
       limit = 5,
     } = req.query;
+    const cacheKey = `follows:suggestion:${follower_id}:${offset}:${limit}:${sortBy}:${order}`;
+
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      return res.status(200).json({
+        status: "Success",
+        message: "Fetch suggestions success! (From Cache)",
+        data: JSON.parse(cached),
+      });
+    }
+
     const notFollowingIds = await prisma.following.findMany({
       where: {
         follower_id: follower_id,
@@ -90,6 +112,9 @@ export async function getFollows(
       ...user,
       isFollowed: followedUserIds.has(user.id),
     }));
+
+    await redis.setEx(cacheKey, 3600, JSON.stringify(usersWithFollowStatus));
+
     res.status(200).json({
       status: "Success",
       message: "Fetch threads success!",
@@ -114,6 +139,17 @@ export async function getFollowing(
       limit = 10,
     } = req.query;
     const logUserId = (req as any).user.id;
+
+    const cacheKey = `following:${follower_id}:${offset}:${limit}:${sortBy}:${order}`;
+    const cached = await redis.get(cacheKey);
+
+    if (cached) {
+      return res.status(200).json({
+        status: "Success",
+        message: "Fetch following success! (From Cache)",
+        data: JSON.parse(cached),
+      });
+    }
     const followingData = await prisma.following.findMany({
       where: {
         follower_id,
@@ -149,6 +185,9 @@ export async function getFollowing(
       ...user,
       isFollowed: followedUserIds.has(user.id),
     }));
+
+    await redis.setEx(cacheKey, 3600, JSON.stringify(usersWithFollowStatus));
+
     res.status(200).json({
       status: "Success",
       message: "Fetch following success!",
@@ -173,6 +212,18 @@ export async function getFollowers(
       offset = 0,
       limit = 10,
     } = req.query;
+
+    const cacheKey = `followers:${following_id}:${offset}:${limit}:${sortBy}:${order}`;
+    const cached = await redis.get(cacheKey);
+
+    if (cached) {
+      return res.status(200).json({
+        status: "Success",
+        message: "Fetch followers success! (From Cache)",
+        data: JSON.parse(cached),
+      });
+    }
+
     const followerData = await prisma.following.findMany({
       where: {
         following_id,
@@ -208,6 +259,9 @@ export async function getFollowers(
       ...user,
       isFollowed: followedUserIds.has(user.id),
     }));
+
+    await redis.setEx(cacheKey, 3600, JSON.stringify(usersWithFollowStatus));
+
     res.status(200).json({
       status: "Success",
       message: "Fetch following success!",
@@ -246,12 +300,21 @@ export async function postFollows(
           bio: true,
         },
       });
+      const totalFollowing = await prisma.following.count({
+        where: { follower_id },
+      });
       io.emit("deleteFollowing", {
         user_id: follower_id,
         targetUser: following_id,
         followingData,
+        totalFollowing,
       });
-      await rmCache("users:");
+      await rmCache(`counts:follow:${follower_id}`);
+      await rmCache(`counts:follow:${following_id}`);
+      await rmCache(`follows:suggestion:${follower_id}:`);
+      await rmCache(`following:${follower_id}:`);
+      await rmCache(`followers:${following_id}:`);
+      await rmCache(`threads:${follower_id}:`);
       return res.status(201).json({
         status: "Success",
         message: "Following deleted successfully",
@@ -286,12 +349,21 @@ export async function postFollows(
       },
     });
     const formattedData = followingData?.user_following;
+    const totalFollowing = await prisma.following.count({
+      where: { follower_id },
+    });
     io.emit("postFollowing", {
       user_id: follower_id,
       targetUser: following_id,
       followingData: formattedData,
+      totalFollowing,
     });
-    await rmCache("users:");
+    await rmCache(`counts:follow:${follower_id}`);
+    await rmCache(`counts:follow:${following_id}`);
+    await rmCache(`follows:suggestion:${follower_id}:`);
+    await rmCache(`following:${follower_id}:`);
+    await rmCache(`followers:${following_id}:`);
+    await rmCache(`threads:${follower_id}:`);
     res.status(201).json({
       status: "Success",
       message: `Create following for user: ${following_id} success!`,

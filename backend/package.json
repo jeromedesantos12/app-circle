@@ -7,6 +7,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node-dev --loader ts-node/esm src/app.ts",
+    "build": "tsc",
+    "start": "node dist/app.js",
     "seed": "ts-node src/connections/seed.ts",
     "studio": "bunx prisma studio",
     "generate": "bunx prisma generate --no-engine",
